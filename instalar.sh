@@ -12,38 +12,17 @@ step()  { echo -e "${GREEN}[✓]${NC} $1"; }
 ask()   { echo -ne "${CYAN}[?]${NC} $1 "; }
 
 # ─────────────────────────────────────
-# PASO 1 — Conectarse al WiFi
+# PASO 1 — Internet (saltar si ya hay)
 # ─────────────────────────────────────
-banner "PASO 1: Conectar WiFi"
+banner "PASO 1: Internet"
 
-echo "Interfaces disponibles:"
-iwctl device list
-echo ""
-
-read -rp "Nombre de la interfaz (ej: wlan0): " IFACE
-IFACE="${IFACE:-wlan0}"
-
-echo "Escaneando redes..."
-iwctl station "$IFACE" scan
-sleep 3
-
-echo ""
-echo "Redes encontradas:"
-iwctl station "$IFACE" get-networks
-echo ""
-
-read -rp "Nombre de la red (SSID): " SSID
-read -rsp "Contraseña: " PASS
-echo ""
-
-if [ -z "$PASS" ]; then
-  iwctl station "$IFACE" connect "$SSID"
+if ping -c 1 archlinux.org &>/dev/null; then
+  step "Ya hay internet — saltando WiFi"
 else
-  iwctl --passphrase "$PASS" station "$IFACE" connect "$SSID"
+  echo "No hay conexión. Conectate con: bash /mnt/wifi.sh"
+  echo "Y después volvé a correr: bash /mnt/instalar.sh"
+  exit 1
 fi
-
-sleep 3
-ping -c 3 archlinux.org && echo "" && step "WiFi conectado" || { echo "ERROR: No se pudo conectar"; exit 1; }
 
 # ─────────────────────────────────────
 # PASO 2 — Particionar el disco
@@ -75,8 +54,12 @@ sgdisk -n 3:0:0 -t 3:8300 "$DISK"
 sleep 2
 partprobe "$DISK" 2>/dev/null || true
 
-PART="${DISK}"
-[ -e "${DISK}p1" ] && PART="${DISK}p" || [ -e "${DISK}1" ] && PART="${DISK}"
+# Detectar prefijo de partición (nvme0n1 → nvme0n1p,  sda → sda)
+if echo "$DISK" | grep -q "nvme"; then
+  PART="${DISK}p"
+else
+  PART="${DISK}"
+fi
 
 EFI="${PART}1"; SWAP="${PART}2"; ROOT="${PART}3"
 
