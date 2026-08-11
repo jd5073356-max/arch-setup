@@ -1,0 +1,31 @@
+PASO A PASO — INSTALAR ARCH LINUX
+====================================
+
+(Esto es lo mismo que hace `instalar.sh` automáticamente.
+ Si preferís hacerlo manual, seguí esto.)
+
+▸ ARRANCAR
+  1. Booteá desde la USB
+  2. Te va a salir una terminal negra. Sos root.
+
+▸ MONTAR LOS SCRIPTS (están en la partición 3 de la USB)
+  3. mount /dev/sda3 /mnt
+
+▸ CONECTAR WIFI
+  4. bash /mnt/wifi.sh
+     → Elegí interfaz (wlan0), buscá redes, poné contraseña.
+
+▸ INSTALAR ARCH
+  5. bash /mnt/instalar.sh
+     → Te guía: particionar, formatear, instalar base, chroot.
+
+▸ CONFIGURAR
+  6. Dentro del chroot:  bash /root/setup-arch.sh
+     → Usuario, contraseña, idioma, escritorio, programas.
+
+▸ TERMINAR
+  7. exit (salís del chroot)
+  8. umount -R /mnt
+  9. reboot
+
+Listo. Sacá la USB y ya tenés Arch con escritorio gráfico.
