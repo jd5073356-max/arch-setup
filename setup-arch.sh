@@ -44,10 +44,35 @@ pacman -S --noconfirm --needed \
   ripgrep fd fzf bat eza zoxide \
   unzip p7zip unrar zip \
   tar gzip xz \
-  openssh networkmanager \
-  ufw firewalld \
+  openssh networkmanager iwd \
+  linux-firmware sof-firmware \
+  ufw \
   zsh tmux
 check "Paquetes base instalados"
+
+# ═══════════════════════ WIFI DRIVERS ═══════════════════════
+banner "Firmware WiFi"
+CPU_VENDOR=$(grep -m1 vendor_id /proc/cpuinfo | awk '{print $3}')
+if lspci -k 2>/dev/null | grep -qi "network\|wireless"; then
+  pacman -S --noconfirm --needed \
+    broadcom-wl-dkms 2>/dev/null || true
+fi
+
+# Firmware común para adaptadores USB y PCI
+pacman -S --noconfirm --needed 2>/dev/null \
+  iwlwifi-dvm-firmware iwlwifi-mvm-firmware 2>/dev/null || true
+pacman -S --noconfirm --needed 2>/dev/null \
+  mt76-firmware mt76x2-firmware mt7601u-firmware 2>/dev/null || true
+pacman -S --noconfirm --needed 2>/dev/null \
+  rtw88-firmware rtw89-firmware 2>/dev/null || true
+pacman -S --noconfirm --needed 2>/dev/null \
+  realtek-firmware rtlwifi_new-dkms-firmware 2>/dev/null || true
+pacman -S --noconfirm --needed 2>/dev/null \
+  b43-firmware 2>/dev/null || true
+check "Firmware WiFi instalado (Intel, MediaTek, Realtek, Broadcom)"
+
+systemctl enable NetworkManager
+check "NetworkManager activado"
 
 # ═══════════════════════ LOCALE ═══════════════════════
 banner "Locale"
