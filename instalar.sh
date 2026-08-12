@@ -44,12 +44,36 @@ read -r CONFIRM
 
 SWAP_SIZE=$(grep MemTotal /proc/meminfo | awk '{printf "%.0f", $2/1024/1024 + 1}')G
 
+# Validar que el disco existe
+[ -b "$DISK" ] || { echo "ERROR: $DISK no existe. Ejecutá lsblk y elegí bien el disco (ej: /dev/nvme0n1)"; exit 1; }
+
 echo "Creando particiones en $DISK..."
 
-sgdisk -Z "$DISK"
-sgdisk -n 1:0:+1G -t 1:ef00 "$DISK"
-sgdisk -n 2:0:+${SWAP_SIZE} -t 2:8200 "$DISK"
-sgdisk -n 3:0:0 -t 3:8300 "$DISK"
+# Desmontar por si estaba montado
+umount ${DISK}* 2>/dev/null || true
+
+# Tabla GPT + particiones con fdisk (viene en la ISO)
+{
+  echo g          # nueva tabla GPT
+  echo n          # partición 1 (EFI)
+  echo 1
+  echo
+  echo +1G
+  echo t          # tipo
+  echo 1
+  echo n          # partición 2 (swap)
+  echo 2
+  echo
+  echo +${SWAP_SIZE}
+  echo t
+  echo 2
+  echo 19         # linux swap
+  echo n          # partición 3 (root)
+  echo 3
+  echo
+  echo
+  echo w          # escribir
+} | fdisk "$DISK"
 
 sleep 2
 partprobe "$DISK" 2>/dev/null || true
